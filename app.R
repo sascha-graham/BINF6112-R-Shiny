@@ -39,7 +39,11 @@ ui <- fluidPage(
             
             selectInput(inputId = "customGroupingInput",
                         label = "Custom grouping:",
-                        choices = c("pheno.csv"))
+                        choices = c("pheno.csv")),
+            
+            selectInput(inputId = "annotationInput",
+                        label = "Annotation data:",
+                        choices = c("Annotation.csv"))
         ),
         
 
@@ -58,6 +62,7 @@ server <- function(input, output) {
     
     samplePathogenData <- read.csv("Alldat.csv",row.names = 1)
     sampleGroupingData <- read.csv("pheno.csv", row.names = 1)
+    sampleAnnotation <- read.csv("Annotation.csv")
     
 
     # select datasets from dropdowns
@@ -69,6 +74,11 @@ server <- function(input, output) {
     customGrouping <- reactive({
         switch(input$customGroupingInput,
                "pheno.csv" = sampleGroupingData)
+    })
+    
+    annotationData <- reactive({
+        switch(input$annotationInput,
+               "Annotation.csv" = sampleAnnotation)
     })
     
     
@@ -146,10 +156,12 @@ server <- function(input, output) {
         y = adjustedPathogenData()
         dat = pathogenData()
         d = averageReplicates()
+        c = customGroups()
         
+        # browser()
         y.dat<- as.matrix(d)
         y.dat <- y.dat[which(apply(y.dat, 1, var)>2 & apply(y.dat,1,mean)>2), 1:6]
-        timepoint <- c(0,2,4,4,16,24)
+        timepoint <- c(0,2,4,8,16,24) # 8 hour timepoint was originally 4 SG
         y.dat <- rbind(timepoint, y.dat)
         rownames(y.dat)[1]<- "time"
         tmp <- tempfile()
@@ -158,30 +170,99 @@ server <- function(input, output) {
         data.z <-standardise(z.data)
         class(data.z)
         m1 <-mestimate(data.z)
-        Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
+        # next line commented because it takes ages 
+        # the purpose is to find the right number of clusters which we know to be 8 SG
+        # Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
         clust=8
         c <- mfuzz(data.z, c=clust, m=m1)
-        mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=0.5,time.labels=c(0,2,4,4,16,24),new.window=FALSE)
-        membership<-c$membership
-        membership<-data.frame(membership)
-        fd<-data.frame(cor(t(c[[1]])))
-        acore<-acore(data.z,c,min.acore = 0.5)
-        acore_list<-do.call(rbind,lapply(seq_along(acore), function(i){data.frame(CLUSTER=i, acore[[i]])}))
-        # colnames(acore_list)[2]<-"gene_name" # again don't do this it will break SG
-        browser()
-        genelist<- acore(data.z,cl=c,min.acore=0.7)
-        # temp <- do.call("rbind", lapply(genelist, FUN = function(x){
-            # return(paste0(as.character(x$NAME), collapse = ","))
-        # }))
-        # TODO: this stuffs up because ClusterList is not formatted correctly
-        # Cluster_list<-as.data.frame(temp)
-        # colnames(Cluster_list) <-"gene_name"
-        # Cluster_list<-str_split_fixed(Cluster_list$gene_name,",", n=Inf)
-        # Cluster_list<-t(Cluster_list)
-        # colnames(Cluster_list)<- c("Cluster1", "Cluster2","Cluster3","Cluster4","Cluster5","Cluster6","Cluster7","Cluster8")
     })
     
+    
+    # we needed the new c frame above so it was made a separate function SG
+    clusterList <- reactive({
+        y = adjustedPathogenData()
+        dat = pathogenData()
+        d = averageReplicates()
+        c = customGroups()
+        
+        # browser()
+        y.dat<- as.matrix(d)
+        y.dat <- y.dat[which(apply(y.dat, 1, var)>2 & apply(y.dat,1,mean)>2), 1:6]
+        timepoint <- c(0,2,4,8,16,24) # 8 hour timepoint was originally 4 SG
+        y.dat <- rbind(timepoint, y.dat)
+        rownames(y.dat)[1]<- "time"
+        tmp <- tempfile()
+        write.table(y.dat,file=tmp, sep='\t',quote=FALSE, col.names=NA)
+        z.data <- table2eset(tmp)
+        data.z <-standardise(z.data)
+        class(data.z)
+        m1 <-mestimate(data.z)
+        # next line commented because it takes ages 
+        # the purpose is to find the right number of clusters which we know to be 8 SG
+        # Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
+        clust=8
+        c <- mfuzz(data.z, c=clust, m=m1)
+        mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=0.5,time.labels=c(0,2,4,8,16,24),new.window=FALSE)
+        membership <- c$membership
+        membership <- data.frame(membership)
+        fd <- data.frame(cor(t(c[[1]])))
+        acore <- acore(data.z,c,min.acore = 0.5)
+        acore_list<-do.call(rbind,lapply(seq_along(acore), function(i){data.frame(CLUSTER=i, acore[[i]])}))
+        # colnames(acore_list)[2]<-"gene_name" # again don't do this it will break SG
+        
+        genelist<- acore(data.z,cl=c,min.acore=0.7)
+        temp <- do.call("rbind", lapply(genelist, FUN = function(x){
+            return(paste0(as.character(x$NAME), collapse = ","))
+        }))
+        # TODO: this stuffs up because Cluster_list is not formatted correctly??
+        Cluster_list<-as.data.frame(temp)
+        # colnames(Cluster_list) <-"gene_name"
+        Cluster_list<-str_split_fixed(Cluster_list$NAME,",", n=Inf)
+        Cluster_list<-t(Cluster_list)
+        # colnames(Cluster_list)<- c("Cluster1", "Cluster2","Cluster3","Cluster4","Cluster5","Cluster6","Cluster7","Cluster8")
+    })
+        
+    
+    # make a list from the GO annotation file
+    annotationList <- reactive({
+        anno <- annotationData()
+        GO <- unique(anno$Gene.Ontology.ID)
+        Uniprot.ID <- sapply(1:length(GO), function(i) paste(gsub("[[:space:]]", "", anno[which(anno$Gene.Ontology.ID==GO[i]),]$Uniprot.ID),collapse=" "))
+        Uniprot.ID <- as.data.frame(Uniprot.ID)
+        GO_Pro_ID <- data.frame(GO.ID=unique(anno$Gene.Ontology.ID),
+                              Uniprot.ID=Uniprot.ID)
+    })
+    
+    
+    # make a list of a list
+    annotationListList <- reactive({
+        Anno <- list()
+        groupSize <- 422
+        GO_IDs <- as.vector(GO_Pro_ID[,1])
+        
+        for (i in GO_IDs) {
+            myindex <- which(GO_Pro_ID == i)
+            Anno[i] <- strsplit(as.character(GO_Pro_ID[myindex, 2]), " ")
+        }
+    })
    
+    
+    # clueR enrichment
+    enrich <- reactive({
+        browser()
+        c = cluster()
+        Anno = annotationListList()
+        
+        ce <- clustEnrichment(c, annotation=Anno, effectiveSize=c(2,100), pvalueCutoff=0.01)
+        
+        out <- c()
+        i <- 1
+        for (clus in ce$enrich.list) {
+            clus<- cbind(rep(paste0("Cluster_",i), nrow(clus)), clus)
+            out <- rbind(out,clus)
+            i = i+1
+        }
+    })
     
     
     
@@ -196,7 +277,8 @@ server <- function(input, output) {
     output$view <- renderTable(
         rownames = TRUE,
         {
-        cluster()
+        # enrich()
+        # browser()
     })
 }
 
