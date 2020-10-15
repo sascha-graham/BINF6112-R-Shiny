@@ -22,10 +22,10 @@ library(ClueR)
 
 # Define UI for application
 ui <- fluidPage(
-
+    
     # Application title
     titlePanel("pipeR Dual RNA-seq Visualizer"),
-
+    
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
@@ -46,14 +46,14 @@ ui <- fluidPage(
                         choices = c("Annotation.csv"))
         ),
         
-
+        
         # Show the input data
         mainPanel(
-           
+            
             # verbatimTextOutput("summary"),
             
             tableOutput("view")
-
+            
             downloadButton('downloadData', 'Download')
         )
     )
@@ -66,7 +66,7 @@ server <- function(input, output) {
     sampleGroupingData <- read.csv("pheno.csv", row.names = 1)
     sampleAnnotation <- read.csv("Annotation.csv")
     
-
+    
     # select datasets from dropdowns
     pathogenData <- reactive({
         switch(input$pathogenDataInput,
@@ -223,7 +223,7 @@ server <- function(input, output) {
         Cluster_list<-t(Cluster_list)
         # colnames(Cluster_list)<- c("Cluster1", "Cluster2","Cluster3","Cluster4","Cluster5","Cluster6","Cluster7","Cluster8")
     })
-        
+    
     
     # make a list from the GO annotation file
     annotationList <- reactive({
@@ -232,7 +232,7 @@ server <- function(input, output) {
         Uniprot.ID <- sapply(1:length(GO), function(i) paste(gsub("[[:space:]]", "", anno[which(anno$Gene.Ontology.ID==GO[i]),]$Uniprot.ID),collapse=" "))
         Uniprot.ID <- as.data.frame(Uniprot.ID)
         GO_Pro_ID <- data.frame(GO.ID=unique(anno$Gene.Ontology.ID),
-                              Uniprot.ID=Uniprot.ID)
+                                Uniprot.ID=Uniprot.ID)
     })
     
     
@@ -247,7 +247,7 @@ server <- function(input, output) {
             Anno[i] <- strsplit(as.character(GO_Pro_ID[myindex, 2]), " ")
         }
     })
-   
+    
     
     # clueR enrichment
     enrich <- reactive({
@@ -279,18 +279,16 @@ server <- function(input, output) {
     output$view <- renderTable(
         rownames = TRUE,
         {
-        # enrich()
-        # browser()
-    })
-
-    data <- c()
-
+            # enrich()
+            # browser()
+        })
+    
     output$downloadData <- downloadHandler(
         filename = function() {
-          paste("data-", Sys.Date(), ".csv", sep="")
+            paste("data-", Sys.Date(), ".csv", sep="")
         },
         content = function(file) {
-          write.csv(data, file)
+            write.csv(out, file)
         }
     )
 }
