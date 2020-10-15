@@ -46,7 +46,7 @@ ui <- fluidPage(
         # Show the input data
         mainPanel(
            
-            #verbatimTextOutput("summary"),
+            # verbatimTextOutput("summary"),
             
             tableOutput("view")
         )
@@ -88,7 +88,8 @@ server <- function(input, output) {
                    rowMeans(dat[,c(10:12)], na.rm = T),
                    rowMeans(dat[,c(13:15)], na.rm = T),
                    rowMeans(dat[,c(16:18)], na.rm = T))
-        colnames(d) <- c("Mean.0h","Mean.2h","Mean.4h","Mean.8h","Mean.16h","Mean.24h")
+        # TODO: can't add column names without overwriting the matrix SG
+        # colnames(averageReplicates) <- c("Mean.0h","Mean.2h","Mean.4h","Mean.8h","Mean.16h","Mean.24h")
     })
     
     
@@ -136,7 +137,7 @@ server <- function(input, output) {
             DE[[n]] <- de.ppi(fit.cont, coef = n)
         }
         
-        Differential.gene.expression.for.2h<-DE[[1]] # differential expression for time 2h as compared to 0h
+        # Differential.gene.expression.for.2h<-DE[[1]] # differential expression for time 2h as compared to 0h
     })
     
     
@@ -147,30 +148,32 @@ server <- function(input, output) {
         d = averageReplicates()
         
         y.dat<- as.matrix(d)
-        # y.dat <- y.dat[which(apply(y.dat, 1, var)>2 & apply(y.dat,1,mean)>2), 1:6]
-        # timepoint <- c(0,2,4,4,16,24)
-        # y.dat <- rbind(timepoint, y.dat)
-        # rownames(y.dat)[1]<- "time"
-        # tmp<- tempfile()
-        # write.table(y.dat,file=tmp, sep='\t',quote=FALSE, col.names=NA)
-        # z.data <- table2eset(tmp)
-        # data.z <-standardise(z.data)
-        # class(data.z)
-        # m1 <-mestimate(data.z)
-        # Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
-        # clust=8
-        # c<- mfuzz(data.z, c=clust, m=m1)
-        # mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=0.5,time.labels=c(0,2,4,4,16,24),new.window=FALSE)
-        # membership<-c$membership
-        # membership<-data.frame(membership)
-        # fd<-data.frame(cor(t(c[[1]])))
-        # acore<-acore(data.z,c,min.acore = 0.5)
-        # acore_list<-do.call(rbind,lapply(seq_along(acore), function(i){data.frame(CLUSTER=i, acore[[i]])}))
-        # colnames(acore_list)[2]<-"gene_name"
-        # genelist<- acore(data.z,cl=c,min.acore=0.7)
+        y.dat <- y.dat[which(apply(y.dat, 1, var)>2 & apply(y.dat,1,mean)>2), 1:6]
+        timepoint <- c(0,2,4,4,16,24)
+        y.dat <- rbind(timepoint, y.dat)
+        rownames(y.dat)[1]<- "time"
+        tmp <- tempfile()
+        write.table(y.dat,file=tmp, sep='\t',quote=FALSE, col.names=NA)
+        z.data <- table2eset(tmp)
+        data.z <-standardise(z.data)
+        class(data.z)
+        m1 <-mestimate(data.z)
+        Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
+        clust=8
+        c <- mfuzz(data.z, c=clust, m=m1)
+        mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=0.5,time.labels=c(0,2,4,4,16,24),new.window=FALSE)
+        membership<-c$membership
+        membership<-data.frame(membership)
+        fd<-data.frame(cor(t(c[[1]])))
+        acore<-acore(data.z,c,min.acore = 0.5)
+        acore_list<-do.call(rbind,lapply(seq_along(acore), function(i){data.frame(CLUSTER=i, acore[[i]])}))
+        # colnames(acore_list)[2]<-"gene_name" # again don't do this it will break SG
+        browser()
+        genelist<- acore(data.z,cl=c,min.acore=0.7)
         # temp <- do.call("rbind", lapply(genelist, FUN = function(x){
-        #     return(paste0(as.character(x$NAME), collapse = ","))
+            # return(paste0(as.character(x$NAME), collapse = ","))
         # }))
+        # TODO: this stuffs up because ClusterList is not formatted correctly
         # Cluster_list<-as.data.frame(temp)
         # colnames(Cluster_list) <-"gene_name"
         # Cluster_list<-str_split_fixed(Cluster_list$gene_name,",", n=Inf)
@@ -183,15 +186,16 @@ server <- function(input, output) {
     
     
     # Generate a summary of a dataset
-    #dataToShow = pathogenData
     
-    #output$summary <- renderPrint({
+    # output$summary <- renderPrint({
     #    dataToShow <- pathogenData()
     #    summary(dataToShow)
-    #})
+    # })
     
     # Show the first "n" observations ----
-    output$view <- renderTable({
+    output$view <- renderTable(
+        rownames = TRUE,
+        {
         cluster()
     })
 }
