@@ -275,16 +275,12 @@ server <- function(input, output) {
     # })
     
     # Show the first "n" observations ----
-    cheese <- reactive({
-        cse <- enrich()
+    output$view <- renderTable(
+        rownames = TRUE,
+        {
+        enrich()
         browser()
     })
-    output$view <- renderDataTable(cheese())
-        # rownames = TRUE,
-        # {
-        # enrich()
-        # browser()
-    # })
 }
 
 # Run the application 
