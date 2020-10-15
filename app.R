@@ -249,21 +249,22 @@ server <- function(input, output) {
     
     # clueR enrichment
     enrich <- reactive({
-        browser()
-        c = cluster()
-        Anno = annotationListList()
+        # browser()
+        c <- cluster()
+        Anno = annotationList() # should be annotationListList() but that breaks SG
         
         ce <- clustEnrichment(c, annotation=Anno, effectiveSize=c(2,100), pvalueCutoff=0.01)
         
-        out <- c()
+        out <- c
         i <- 1
         for (clus in ce$enrich.list) {
             clus<- cbind(rep(paste0("Cluster_",i), nrow(clus)), clus)
-            out <- rbind(out,clus)
             i = i+1
+            out <- rbind(out,clus)
         }
+        out <- out
+        browser()
     })
-    
     
     
     # Generate a summary of a dataset
@@ -274,12 +275,16 @@ server <- function(input, output) {
     # })
     
     # Show the first "n" observations ----
-    output$view <- renderTable(
-        rownames = TRUE,
-        {
+    cheese <- reactive({
+        cse <- enrich()
+        browser()
+    })
+    output$view <- renderDataTable(cheese())
+        # rownames = TRUE,
+        # {
         # enrich()
         # browser()
-    })
+    # })
 }
 
 # Run the application 
