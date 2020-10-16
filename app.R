@@ -299,6 +299,14 @@ server <- function(input, output) {
         
     })
     
+    output$downloadData <- downloadHandler(
+        filename = function() {
+          paste("data-", Sys.Date(), ".csv", sep="")
+        },
+        content = function(file) {
+          write.csv(enrich, file)
+        }
+    )
 }
 
 # Run the application 
