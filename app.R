@@ -221,22 +221,19 @@ server <- function(input, output) {
         Cluster_list<-t(Cluster_list)
         # colnames(Cluster_list)<- c("Cluster1", "Cluster2","Cluster3","Cluster4","Cluster5","Cluster6","Cluster7","Cluster8")
     })
-        
-    
-    # make a list from the GO annotation file
-    annotationList <- reactive({
-        anno <- annotationData()
-        GO <- unique(anno$Gene.Ontology.ID)
-        Uniprot.ID <- sapply(1:length(GO), function(i) paste(gsub("[[:space:]]", "", anno[which(anno$Gene.Ontology.ID==GO[i]),]$Uniprot.ID),collapse=" "))
-        Uniprot.ID <- as.data.frame(Uniprot.ID)
-        GO_Pro_ID <- data.frame(GO.ID=unique(anno$Gene.Ontology.ID),
-                              Uniprot.ID=Uniprot.ID)
-    })
     
     
     # clueR enrichment
     enrich <- reactive({
         c = cluster()
+        
+        # Make annotation list
+        anno <- annotationData()
+        GO <- unique(anno$Gene.Ontology.ID)
+        Uniprot.ID <- sapply(1:length(GO), function(i) paste(gsub("[[:space:]]", "", anno[which(anno$Gene.Ontology.ID==GO[i]),]$Uniprot.ID),collapse=" "))
+        Uniprot.ID <- as.data.frame(Uniprot.ID)
+        GO_Pro_ID <- data.frame(GO.ID=unique(anno$Gene.Ontology.ID),
+                                Uniprot.ID=Uniprot.ID)
         
         # List of annotations
         Anno <- list()
