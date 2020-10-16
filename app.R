@@ -280,6 +280,15 @@ server <- function(input, output) {
           enrich()
         })
       
+      output$downloadData <- downloadHandler(
+        filename = function() {
+          paste("data-", Sys.Date(), ".csv", sep="")
+        },
+        content = function(file) {
+          write.csv(enrich(), file)
+        }
+      )
+      
     })
 
     observeEvent(input$click2, {
@@ -299,17 +308,7 @@ server <- function(input, output) {
         
     })
     
-    output$downloadData <- downloadHandler(
-        filename = function() {
-          paste("data-", Sys.Date(), ".csv", sep="")
-        },
-        content = function(file) {
-          write.csv(enrich, file)
-        }
-    )
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
-
