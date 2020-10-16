@@ -234,8 +234,11 @@ server <- function(input, output) {
     })
     
     
-    # make a list of a list
-    annotationListList <- reactive({
+    # clueR enrichment
+    enrich <- reactive({
+        c = cluster()
+        
+        # List of annotations
         Anno <- list()
         groupSize <- 422
         GO_IDs <- as.vector(GO_Pro_ID[,1])
@@ -244,26 +247,16 @@ server <- function(input, output) {
             myindex <- which(GO_Pro_ID == i)
             Anno[i] <- strsplit(as.character(GO_Pro_ID[myindex, 2]), " ")
         }
-    })
-   
-    
-    # clueR enrichment
-    enrich <- reactive({
-        # browser()
-        c <- cluster()
-        Anno = annotationList() # should be annotationListList() but that breaks SG
         
         ce <- clustEnrichment(c, annotation=Anno, effectiveSize=c(2,100), pvalueCutoff=0.01)
-        
-        out <- c
+        out <- c()
         i <- 1
         for (clus in ce$enrich.list) {
-            clus<- cbind(rep(paste0("Cluster_",i), nrow(clus)), clus)
+            clus <- cbind(rep(paste0("Cluster_",i), nrow(clus)), clus)
             i = i+1
             out <- rbind(out,clus)
         }
-        out <- out
-        browser()
+        out
     })
     
     
@@ -279,7 +272,6 @@ server <- function(input, output) {
         rownames = TRUE,
         {
         enrich()
-        browser()
     })
 }
 
