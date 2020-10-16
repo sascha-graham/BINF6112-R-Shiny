@@ -96,6 +96,7 @@ server <- function(input, output) {
         c <- customGrouping()[colnames(pathogenData()), "groups"]
       })
       
+      
       # average replicates across groups from raw data
       averageReplicates <- reactive({
         c = customGroups()
@@ -155,7 +156,7 @@ server <- function(input, output) {
           DE[[n]] <- de.ppi(fit.cont, coef = n)
         }
         
-        Differential.gene.expression.for.2h<-DE[[1]] # differential expression for time 2h as compared to 0h
+        # Differential.gene.expression.for.2h<-DE[[1]] # differential expression for time 2h as compared to 0h
       })
       
       
@@ -231,19 +232,19 @@ server <- function(input, output) {
       })
       
       
-      # make a list from the GO annotation file
-      annotationList <- reactive({
+      # clueR enrichment
+      enrich <- reactive({
+        c = cluster()
+        
+        # Make annotation list
         anno <- annotationData()
         GO <- unique(anno$Gene.Ontology.ID)
         Uniprot.ID <- sapply(1:length(GO), function(i) paste(gsub("[[:space:]]", "", anno[which(anno$Gene.Ontology.ID==GO[i]),]$Uniprot.ID),collapse=" "))
         Uniprot.ID <- as.data.frame(Uniprot.ID)
         GO_Pro_ID <- data.frame(GO.ID=unique(anno$Gene.Ontology.ID),
                                 Uniprot.ID=Uniprot.ID)
-      })
-      
-      
-      # make a list of a list
-      annotationListList <- reactive({
+        
+        # List of annotations
         Anno <- list()
         groupSize <- 422
         GO_IDs <- as.vector(GO_Pro_ID[,1])
@@ -252,26 +253,16 @@ server <- function(input, output) {
           myindex <- which(GO_Pro_ID == i)
           Anno[i] <- strsplit(as.character(GO_Pro_ID[myindex, 2]), " ")
         }
-      })
-      
-      
-      # clueR enrichment
-      enrich <- reactive({
-        # browser()
-        c <- cluster()
-        Anno = annotationList() # should be annotationListList() but that breaks SG
         
         ce <- clustEnrichment(c, annotation=Anno, effectiveSize=c(2,100), pvalueCutoff=0.01)
-        
-        out <- c
+        out <- c()
         i <- 1
         for (clus in ce$enrich.list) {
-          clus<- cbind(rep(paste0("Cluster_",i), nrow(clus)), clus)
+          clus <- cbind(rep(paste0("Cluster_",i), nrow(clus)), clus)
           i = i+1
           out <- rbind(out,clus)
         }
-        out <- out
-        #browser()
+        out
       })
       
       
@@ -286,13 +277,10 @@ server <- function(input, output) {
       output$view <- renderTable(
         rownames = TRUE,
         {
-          differentialExpressionPathogen()
-          #browser()
+          enrich()
         })
       
     })
-    
-  
 
     observeEvent(input$click2, {
         # Return the requested dataset
