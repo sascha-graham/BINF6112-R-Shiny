@@ -59,7 +59,7 @@ ui <- fluidPage(
             tags$hr(),
             selectInput(inputId = "dataset",
                         label = "Or select a sample dataset to visualise:",
-                        choices = c("option A", "option B", "option C")),
+                        choices = c("Pathogen data", "Grouping data", "Annotations")),
             
             actionButton("click2", "Submit")
             
@@ -75,6 +75,10 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+    
+    samplePathogenData <- read.csv("Alldat.csv",row.names = 1)
+    sampleGroupingData <- read.csv("pheno.csv", row.names = 1)
+    sampleAnnotation <- read.csv("Annotation.csv")
     
   observeEvent(input$click1, {
       
@@ -295,14 +299,15 @@ server <- function(input, output) {
         # Return the requested dataset
         datasetInput <- reactive({
             switch(input$dataset,
-                   "option A" = dat,
-                   "option B" = anno,
-                   "option C" = pheno)
+                   "Pathogen data" = samplePathogenData,
+                   "Grouping data" = sampleGroupingData,
+                   "Annotations" = sampleAnnotation)
         })
         
         
         # Show the first "n" observations ----
-        output$view <- renderTable({
+        output$view <- renderTable(
+            rownames = TRUE, {
             datasetInput()
         })
         
