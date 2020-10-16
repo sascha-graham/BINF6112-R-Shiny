@@ -51,10 +51,8 @@ ui <- fluidPage(
         mainPanel(
             
             # verbatimTextOutput("summary"),
-            
+            downloadButton('downloadData', 'Download'),
             tableOutput("view")
-            
-            downloadButton('downloadData', 'Download')
         )
     )
 )
@@ -225,19 +223,19 @@ server <- function(input, output) {
     })
     
     
-    # make a list from the GO annotation file
-    annotationList <- reactive({
+    # clueR enrichment
+    enrich <- reactive({
+        c = cluster()
+        
+        # Make annotation list
         anno <- annotationData()
         GO <- unique(anno$Gene.Ontology.ID)
         Uniprot.ID <- sapply(1:length(GO), function(i) paste(gsub("[[:space:]]", "", anno[which(anno$Gene.Ontology.ID==GO[i]),]$Uniprot.ID),collapse=" "))
         Uniprot.ID <- as.data.frame(Uniprot.ID)
         GO_Pro_ID <- data.frame(GO.ID=unique(anno$Gene.Ontology.ID),
                                 Uniprot.ID=Uniprot.ID)
-    })
-    
-    
-    # make a list of a list
-    annotationListList <- reactive({
+        
+        # List of annotations
         Anno <- list()
         groupSize <- 422
         GO_IDs <- as.vector(GO_Pro_ID[,1])
@@ -246,26 +244,17 @@ server <- function(input, output) {
             myindex <- which(GO_Pro_ID == i)
             Anno[i] <- strsplit(as.character(GO_Pro_ID[myindex, 2]), " ")
         }
-    })
-    
-    
-    # clueR enrichment
-    enrich <- reactive({
-        browser()
-        c = cluster()
-        Anno = annotationListList()
         
         ce <- clustEnrichment(c, annotation=Anno, effectiveSize=c(2,100), pvalueCutoff=0.01)
-        
         out <- c()
         i <- 1
         for (clus in ce$enrich.list) {
-            clus<- cbind(rep(paste0("Cluster_",i), nrow(clus)), clus)
-            out <- rbind(out,clus)
+            clus <- cbind(rep(paste0("Cluster_",i), nrow(clus)), clus)
             i = i+1
+            out <- rbind(out,clus)
         }
+        out
     })
-    
     
     
     # Generate a summary of a dataset
@@ -279,16 +268,15 @@ server <- function(input, output) {
     output$view <- renderTable(
         rownames = TRUE,
         {
-            # enrich()
-            # browser()
+            enrich()
         })
     
     output$downloadData <- downloadHandler(
         filename = function() {
-            paste("data-", Sys.Date(), ".csv", sep="")
+          paste("data-", Sys.Date(), ".csv", sep="")
         },
         content = function(file) {
-            write.csv(out, file)
+          write.csv(out, file)
         }
     )
 }
