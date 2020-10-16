@@ -22,10 +22,10 @@ library(ClueR)
 
 # Define UI for application
 ui <- fluidPage(
-    
+
     # Application title
     titlePanel("pipeR Dual RNA-seq Visualizer"),
-    
+
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
@@ -46,10 +46,10 @@ ui <- fluidPage(
                         choices = c("Annotation.csv"))
         ),
         
-        
+
         # Show the input data
         mainPanel(
-            
+           
             # verbatimTextOutput("summary"),
             downloadButton('downloadData', 'Download'),
             tableOutput("view")
@@ -64,7 +64,7 @@ server <- function(input, output) {
     sampleGroupingData <- read.csv("pheno.csv", row.names = 1)
     sampleAnnotation <- read.csv("Annotation.csv")
     
-    
+
     # select datasets from dropdowns
     pathogenData <- reactive({
         switch(input$pathogenDataInput,
@@ -268,9 +268,9 @@ server <- function(input, output) {
     output$view <- renderTable(
         rownames = TRUE,
         {
-            enrich()
-        })
-    
+        enrich()
+    })
+
     output$downloadData <- downloadHandler(
         filename = function() {
           paste("data-", Sys.Date(), ".csv", sep="")
