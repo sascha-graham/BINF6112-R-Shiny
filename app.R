@@ -18,8 +18,8 @@ ui <- function(request) {
   sidebar <- dashboardSidebar(
     hr(),
     sidebarMenu(id="tabs",
-                menuItem("Plot", tabName="plot", icon=icon("line-chart")),
-                menuItem("Upload", tabName = "table", icon=icon("table"), selected=TRUE),
+                menuItem("Upload", tabName="table", icon=icon("table"), selected=TRUE),
+                menuItem("Pipeline Output", tabName = "plot", icon=icon("line-chart")),
                 menuItem("About", tabName = "about", icon = icon("question"))
     ),
     hr(),
@@ -43,69 +43,8 @@ ui <- function(request) {
   
   body <- dashboardBody(
     tabItems(
-      tabItem(tabName = "plot",
-              fluidRow(
-                column(width = 6, 
-                       tabBox(width = NULL,
-                              tabPanel(
-                                h5("Tools"),
-                                fluidRow(
-                                  column(
-                                    width = 12,
-                                    box(
-                                      width = NULL, collapsible = TRUE,
-                                      title = "settings", solidHeader = TRUE,
-                                      splitLayout(
-                                      )
-                                      
-                                    )), column(
-                                      width = 12,
-                                      box(width = NULL, collapsible = TRUE,
-                                          collapsed = TRUE,
-                                          title = "advanced settings", solidHeader = TRUE,
-                                          div(style = 'overflow-y:scroll;height:576px;',
-                                              splitLayout(helpText("you have to choose", br(), 
-                                                                   "a horizon if you want to", br(),
-                                                                   "change something"),
-                                                          numericInput("shape", 
-                                                                       "shape", .1, 
-                                                                       min = 0,
-                                                                       max = 40)
-                                              ),
-                                              hr(),
-                                              splitLayout(),
-                                              hr(),
-                                              splitLayout(
-                                                
-                                              )
-                                          )
-                                          
-                                      )
-                                      
-                                    )
-                                )
-                              ),
-                              tabPanel(h5("Uploaded Files"),
-                                       fluidRow(
-                                         column(
-                                           width = 12,
-                                           h4("Global settings:"),
-                                           helpText("In order to represent soil-forming processes, such as hydromorphic characteristics, a square in the plot must be marked using the mouse. In this area the symbols will be drawn. This can be repeated at will to select different symbols. However, if there is no more space, no symbol will be drawn.  Unless the box 'only one symbol' is clicked. Now in any case the symbol is drawn and the size is appended to the marked area and can no longer be adjusted with the slider. Try it!"),
-                                         )
-                                       )
-                              )
-                       )
-                ),
-                column(
-                  width = 6,
-                  box(width = NULL, plotOutput("plot1", height="650px", brush = "plot_brush"), 
-                      title = "Plot", solidHeader = TRUE, status = "primary")
-                  
-                )
-              )
-      ),
       tabItem(tabName = "table",
-              box(width = NULL, status = "primary", solidHeader = TRUE, title="Table",
+              box(width = NULL, status = "primary", solidHeader = TRUE, title="Upload Data",
                   fileInput("file1", "Upload Pathogen Data",
                             multiple = TRUE,
                             accept = c("text/csv",
@@ -130,15 +69,56 @@ ui <- function(request) {
                                        "text/comma-separated-values,text/plain",
                                        ".csv")),
                   
-                  actionButton("click1", "Submit"),
-                  br(),
-                  tableOutput("view")
+                  actionButton("click1", "Submit")  
               ),
-              box(width = NULL, plotOutput("plot1", height="650px", brush = "plot_brush"), 
-                  title = "Data", solidHeader = TRUE, status = "primary")
+              box(width = NULL, title = "Exanple Data Format", solidHeader = TRUE, status = "primary", 
+                  selectInput(inputId = "dataset",
+                              label = "Select a sample dataset to see formatting:",
+                              choices = c("Pathogen data", "Grouping data", "Annotations")),
+                  
+                  actionButton("click2", "Submit"),
+                  p(),
+                  tableOutput("content")
+              )
+      ),
+      tabItem(tabName = "plot",
+              fluidRow(
+                column(width = 6, 
+                       tabBox(width = NULL,
+                              tabPanel(h5("Uploaded Files"),
+                                       fluidRow(
+                                         column(
+                                           width = 12,
+                                           h4("You have uploaded the following files:"),
+                                           textOutput("files")
+                                           
+                                         )
+                                       )
+                              ),
+                              tabPanel(
+                                h5("Tools"),
+                                fluidRow(
+                                  column(
+                                    width = 12,
+                                    box(width = NULL, collapsible = TRUE, title = "Settings", solidHeader = TRUE)), 
+                                  column(
+                                      width = 12,
+                                      box(width = NULL, collapsible = TRUE,
+                                          collapsed = TRUE, title = "Advanced settings", solidHeader = TRUE))
+                                )
+                              )
+                       )
+                ),
+                column(
+                  width = 6,
+                  box(width = NULL, tableOutput("view"), 
+                      title = "Pipeline Results", solidHeader = TRUE, status = "primary")
+                  
+                )
+              )
       ),
       tabItem(tabName = "about",
-              box(width = NULL, plotOutput("plot1", height="650px", brush = "plot_brush"), 
+              box(width = NULL, plotOutput("plot3", height="650px", brush = "plot_brush"), 
                   title = "About the Pipeline", solidHeader = TRUE, status = "primary")
               
       )
@@ -157,6 +137,8 @@ ui <- function(request) {
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+  
+  options(shiny.maxRequestSize=100*1024^2)
   
   samplePathogenData <- read.csv("Alldat.csv",row.names = 1)
   sampleGroupingData <- read.csv("pheno.csv", row.names = 1)
@@ -377,6 +359,31 @@ server <- function(input, output) {
     
   })
   
+  output$files <- renderText(
+    {
+      x = ""
+      if (!is.null(input$file1$datapath)) {
+        # Extract file name
+        x <- sub(".csv$", "", basename(input$file1$name))
+      } 
+      
+      if (!is.null(input$file2$datapath)) {
+        # Extract file name
+        x <- c(x, sub(".csv$", "", basename(input$file2$name)))
+      } 
+      
+      if (!is.null(input$file3$datapath)) {
+        # Extract file name
+        x <- c(x, sub(".csv$", "", basename(input$file3$name)))
+      }
+      
+      if (!is.null(input$file4$datapath)) {
+        # Extract file name
+        x <- c(x, sub(".csv$", "", basename(input$file4$name)))
+      }
+      return(x)
+    })
+  
   observeEvent(input$click2, {
     # Return the requested dataset
     datasetInput <- reactive({
@@ -388,7 +395,7 @@ server <- function(input, output) {
     
     
     # Show the first "n" observations ----
-    output$view <- renderTable(
+    output$content <- renderTable(
       rownames = TRUE, {
         datasetInput()
       })
