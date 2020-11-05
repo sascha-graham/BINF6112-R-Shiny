@@ -120,18 +120,19 @@ totaldown <- rbind(totaldown,up5)
 print(totalup)
 
 # From high to low the up&down data
-up2hour <- up1[order(up1$logFC, decreasing = T),]
+up2hour <- up1[order(up1$logFC),]
 #print(up2hour)
-up4hour <- up2[order(up2$logFC, decreasing = T),]
-up8hour <- up3[order(up3$logFC, decreasing = T),]
-up16hour <- up4[order(up4$logFC, decreasing = T),]
-up24hour <- up5[order(up5$logFC, decreasing = T),]
+up4hour <- up2[order(up2$logFC ),]
+up8hour <- up3[order(up3$logFC ),]
+up16hour <- up4[order(up4$logFC ),]
+up24hour <- up5[order(up5$logFC ),]
 
 
-down2hour <-  down1[order(down1$logFC, decreasing = T),]
-down4hour <-  down2[order(down2$logFC, decreasing = T),]
-down8hour <-  down3[order(down3$logFC, decreasing = T),]
-down16hour <- down4[order(down4$logFC, decreasing = T),]
-down24hour <- down5[order(down5$logFC, decreasing = T),]
+down2hour <-  down1[order(down1$logFC ),]
+down4hour <-  down2[order(down2$logFC ),]
+down8hour <-  down3[order(down3$logFC ),]
+down16hour <- down4[order(down4$logFC ),]
+down24hour <- down5[order(down5$logFC ),]
 
+print(down2hour)
 
