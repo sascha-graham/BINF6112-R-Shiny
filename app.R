@@ -27,12 +27,12 @@ ui <- function(request) {
                      fluidRow(
                        column(1),
                        column(10,
-                              h4("Other goodies"),
-                              sliderInput("plot_width", "Plot width", value = 3, min = 1, max= 5, step = .5),
-                              hr(),
-                              h5("Save current state"),
-                              bookmarkButton(),
-                              hr(),
+                              # h4("Other goodies"),
+                              # sliderInput("plot_width", "Plot width", value = 3, min = 1, max= 5, step = .5),
+                              # hr(),
+                              # h5("Save current state"),
+                              # bookmarkButton(),
+                              # hr(),
                               h5("Download Plot"),
                               downloadButton('downloadData', 'Download')
                        )
@@ -71,7 +71,7 @@ ui <- function(request) {
                   
                   actionButton("click1", "Submit")  
               ),
-              box(width = NULL, title = "Exanple Data Format", solidHeader = TRUE, status = "primary", 
+              box(width = NULL, title = "Example Data Format", solidHeader = TRUE, status = "primary", 
                   selectInput(inputId = "dataset",
                               label = "Select a sample dataset to see formatting:",
                               choices = c("Pathogen data", "Grouping data", "Annotations")),
@@ -96,15 +96,10 @@ ui <- function(request) {
                                        )
                               ),
                               tabPanel(
-                                h5("Tools"),
+                                h5("Options"),
                                 fluidRow(
-                                  column(
-                                    width = 12,
-                                    box(width = NULL, collapsible = TRUE, title = "Settings", solidHeader = TRUE)), 
-                                  column(
-                                      width = 12,
-                                      box(width = NULL, collapsible = TRUE,
-                                          collapsed = TRUE, title = "Advanced settings", solidHeader = TRUE))
+                                  actionButton("clickCluster", "Clustering"),
+                                  actionButton("clickDE", "Differential Expression")  
                                 )
                               )
                        )
