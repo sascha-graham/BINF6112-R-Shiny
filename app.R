@@ -23,7 +23,18 @@ ui <- function(request) {
                 menuItem("About", tabName = "about", icon = icon("question"))
     ),
     hr(),
+    fluidRow(
+      column(1),
+      column(10,
+        h4("Uploaded files:"),
+        textOutput("pathFile"),
+        textOutput("hostFile"),
+        textOutput("groupFile"),
+        textOutput("annoFile")
+      ),
+    ),
     conditionalPanel("input.tabs == 'plot'",
+                     hr(),
                      fluidRow(
                        column(1),
                        column(10,
@@ -42,6 +53,9 @@ ui <- function(request) {
   )
   
   body <- dashboardBody(
+    # tags$head(
+    #   tags$style(HTML('#clickCluster{margin-right: 20px}'))
+    # ),
     tabItems(
       tabItem(tabName = "table",
               box(width = NULL, status = "primary", solidHeader = TRUE, title="Upload Data",
@@ -69,48 +83,31 @@ ui <- function(request) {
                                        "text/comma-separated-values,text/plain",
                                        ".csv")),
                   
-                  actionButton("click1", "Submit")  
+                  actionButton("clickUpload", "Run Pipeline")  
               ),
               box(width = NULL, title = "Example Data Format", solidHeader = TRUE, status = "primary", 
                   selectInput(inputId = "dataset",
                               label = "Select a sample dataset to see formatting:",
                               choices = c("Pathogen data", "Grouping data", "Annotations")),
                   
-                  actionButton("click2", "Submit"),
+                  actionButton("clickExample", "Submit"),
                   p(),
-                  tableOutput("content")
+                  div(style = 'overflow-x: scroll', tableOutput("content"))
               )
       ),
       tabItem(tabName = "plot",
-              fluidRow(
-                column(width = 6, 
                        tabBox(width = NULL,
-                              tabPanel(h5("Uploaded Files"),
-                                       fluidRow(
-                                         column(
-                                           width = 12,
-                                           h4("You have uploaded the following files:"),
-                                           textOutput("files")
+                              tabPanel(h5("Clustering"),
+                                div(style = 'overflow-x: scroll', tableOutput("view"))
                                            
-                                         )
-                                       )
                               ),
                               tabPanel(
-                                h5("Options"),
-                                fluidRow(
-                                  actionButton("clickCluster", "Clustering"),
-                                  actionButton("clickDE", "Differential Expression")  
-                                )
+                                h5("Differential Expression"),
+                                  # actionButton("clickCluster", "Clustering"),
+                                  # actionButton("clickDE", "Differential Expression")  
                               )
                        )
-                ),
-                column(
-                  width = 6,
-                  box(width = NULL, tableOutput("view"), 
-                      title = "Pipeline Results", solidHeader = TRUE, status = "primary")
-                  
-                )
-              )
+            
       ),
       tabItem(tabName = "about",
               box(width = NULL, plotOutput("plot3", height="650px", brush = "plot_brush"), 
@@ -139,7 +136,35 @@ server <- function(input, output) {
   sampleGroupingData <- read.csv("pheno.csv", row.names = 1)
   sampleAnnotation <- read.csv("Annotation.csv")
   
-  observeEvent(input$click1, {
+  observeEvent(input$clickUpload, {
+    
+    output$pathFile <- renderText(
+      if (!is.null(input$file1$datapath)) {
+        # Extract file name
+        x <- sub(".csv$", "", basename(input$file1$name))
+        return(x)
+      })
+    
+    output$hostFile <- renderText(
+      if (!is.null(input$file2$datapath)) {
+        # Extract file name
+        x <- c(sub(".csv$", "", basename(input$file2$name)))
+        return(x)
+      })
+    
+    output$groupFile <- renderText(
+      if (!is.null(input$file3$datapath)) {
+        # Extract file name
+        x <- c(sub(".csv$", "", basename(input$file3$name)))
+        return(x)
+      })
+    
+    output$annoFile <- renderText( 
+      if (!is.null(input$file4$datapath)) {
+        # Extract file name
+        x <- c(sub(".csv$", "", basename(input$file4$name)))
+        return(x)
+      })
     
     # select datasets from dropdowns
     pathogenData <- reactive({
@@ -354,32 +379,7 @@ server <- function(input, output) {
     
   })
   
-  output$files <- renderText(
-    {
-      x = ""
-      if (!is.null(input$file1$datapath)) {
-        # Extract file name
-        x <- sub(".csv$", "", basename(input$file1$name))
-      } 
-      
-      if (!is.null(input$file2$datapath)) {
-        # Extract file name
-        x <- c(x, sub(".csv$", "", basename(input$file2$name)))
-      } 
-      
-      if (!is.null(input$file3$datapath)) {
-        # Extract file name
-        x <- c(x, sub(".csv$", "", basename(input$file3$name)))
-      }
-      
-      if (!is.null(input$file4$datapath)) {
-        # Extract file name
-        x <- c(x, sub(".csv$", "", basename(input$file4$name)))
-      }
-      return(x)
-    })
-  
-  observeEvent(input$click2, {
+  observeEvent(input$clickExample, {
     # Return the requested dataset
     datasetInput <- reactive({
       switch(input$dataset,
