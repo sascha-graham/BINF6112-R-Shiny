@@ -36,15 +36,6 @@ ui <- function(request) {
     conditionalPanel("input.tabs == 'plot'",
                      hr(),
                      fluidRow(
-                       column(10, numericInput("numClusters", 
-                                               h5("Number of Clusters:"), 
-                                               value = 4, min=2, max=12), 
-                              numericInput("minMem", 
-                                           h5("Minimum Membership:"), 
-                                           value=0.3, min=0.1, max=1.0, step=0.1))
-                       ), 
-                     hr(),
-                     fluidRow(
                        column(1),
                        column(10,
                               # h4("Other goodies"),
@@ -63,9 +54,9 @@ ui <- function(request) {
   )
   
   body <- dashboardBody(
-#     tags$head(
-#      tags$style(HTML('#clickAdjust{margin-left:30px}'))
-#     ),
+     tags$head(
+      tags$style(HTML('#clickUpload{background:#d6863a; border:#d6863a}'))
+     ),
     tabItems(
       tabItem(tabName = "table",
               box(width = NULL, status = "primary", solidHeader = TRUE, title="Upload Data",
@@ -93,15 +84,17 @@ ui <- function(request) {
                                        "text/comma-separated-values,text/plain",
                                        ".csv")),
               ),
-              box(width = NULL, title = "Cluster Optimisation", solidHeader = TRUE, status = "primary", 
+              box(width = NULL, title = "Optional Cluster Optimisation", solidHeader = TRUE, status = "primary", 
+                  actionButton("clickDMIN", "View DMIN Plot"),
+                  plotOutput("dmPlot"),
                   numericInput("numClusters", 
                                h5("Number of Clusters:"), 
                                value = 4, min=2, max=12), 
                   numericInput("minMem", 
                                h5("Minimum Membership:"), 
-                               value=0.3, min=0.1, max=1.0, step=0.1)
-              ), 
-              actionButton("clickUpload", "Run Pipeline")  
+                               value=0.3, min=0.1, max=1.0, step=0.1),
+              ),
+              actionButton("clickUpload", "Run the Pipeline")
       ),
       tabItem(tabName = "plot",
               tabBox(width = NULL,
@@ -155,8 +148,8 @@ server <- function(input, output) {
   sampleGroupingData <- read.csv("pheno.csv", row.names = 1)
   sampleAnnotation <- read.csv("Annotation.csv")
   
-  
-  # AMY these are the default values - pls use these variables :)
+
+  # variables for num of clusters and min membership
   n_clusters <- reactive({
     n = input$numClusters
   })
@@ -367,9 +360,6 @@ server <- function(input, output) {
     data.z <-standardise(z.data)
     class(data.z)
     m1 <-mestimate(data.z)
-    # next line commented because it takes ages 
-    # the purpose is to find the right number of clusters which we know to be 8 SG
-    # Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
     c <- mfuzz(data.z, c=n_clusters, m=m1)
   })
   
@@ -403,33 +393,30 @@ server <- function(input, output) {
       i = i+1
       out <- rbind(out,clus)
     }
-    colnames(out)<- c("Cluster", "GO term", "p-value", "Overlap size", "Overlaping genes")
+    
+    #TODO: DO WE NEED TO CHANGE THIS?
+    colnames(out)<- c("Cluster", "GO term", "p-value", "Overlap size", "Overlapping genes")
     out
   })
   
-  
-  # Generate a summary of a dataset
-  
-  # output$summary <- renderPrint({
-  #    dataToShow <- pathogenData()
-  #    summary(dataToShow)
-  # })
-  
+  # running the pipeline and outputting tables/plots
   observeEvent(input$clickUpload, {
-    # Show the first "n" observations ----
+    
+    # outputs cluster tables
     output$view <- renderTable(
       rownames = TRUE,
       {
         enrich()
       })
     
+    # differential expression (NOT WORKING)
     output$diffExp <- renderTable(
       rownames = FALSE,
       {
         differentialExpression()
       })
     
-    # AMY this gives the plot from server
+    # cluster plot output
     output$cluster_plots <- renderPlot({
       y = adjustedPathogenData()
       dat = pathogenData()
@@ -456,6 +443,7 @@ server <- function(input, output) {
     
   })
   
+  # download tables
   output$downloadData <- downloadHandler(
     filename = function() {
       paste("data-", Sys.Date(), ".csv", sep="")
@@ -464,8 +452,31 @@ server <- function(input, output) {
       write.csv(enrich(), file)
     }
   )
-    
   
+  # outputs dmin plot if requested
+  # the purpose is to find the right number of clusters
+  observeEvent(input$clickDMIN, {
+    output$dmPlot <- renderPlot({
+      y = adjustedPathogenData()
+      d = averageReplicates()
+      
+      # browser()
+      y.dat<- as.matrix(d)
+      y.dat <- y.dat[which(apply(y.dat, 1, var)>2 & apply(y.dat,1,mean)>2), 1:6]
+      timepoint <- c(0,2,4,8,16,24) # 8 hour timepoint was originally 4 SG
+      y.dat <- rbind(timepoint, y.dat)
+      rownames(y.dat)[1]<- "time"
+      tmp <- tempfile()
+      write.table(y.dat,file=tmp, sep='\t',quote=FALSE, col.names=NA)
+      z.data <- table2eset(tmp)
+      data.z <-standardise(z.data)
+      class(data.z)
+      m1 <-mestimate(data.z)
+      Dmin(data.z, m=m1, crange=seq(2,16,1), repeats = 2, visu = TRUE)
+    })
+  })
+  
+  # allows users to view example formatting
   observeEvent(input$clickExample, {
     # Return the requested dataset
     datasetInput <- reactive({
@@ -483,6 +494,82 @@ server <- function(input, output) {
       })
     
   })
+  
+  #SASCHA not sure what the purpose for this section is is so i've commented it out i.e. it works without it
+  # # we needed the new c frame above so it was made a separate function SG
+  # clusterList <- reactive({
+  #   y = adjustedPathogenData()
+  #   dat = pathogenData()
+  #   d = averageReplicates()
+  #   c = customGroups()
+  #   n_clusters = n_clusters()
+  #   min_membership = min_membership()
+  #   
+  #   # browser()
+  #   y.dat<- as.matrix(d)
+  #   y.dat <- y.dat[which(apply(y.dat, 1, var)>2 & apply(y.dat,1,mean)>2), 1:6]
+  #   timepoint <- c(0,2,4,8,16,24) # 8 hour timepoint was originally 4 SG
+  #   y.dat <- rbind(timepoint, y.dat)
+  #   rownames(y.dat)[1]<- "time"
+  #   tmp <- tempfile()
+  #   write.table(y.dat,file=tmp, sep='\t',quote=FALSE, col.names=NA)
+  #   z.data <- table2eset(tmp)
+  #   data.z <-standardise(z.data)
+  #   class(data.z)
+  #   m1 <-mestimate(data.z)
+  #   # next line commented because it takes ages 
+  #   # the purpose is to find the right number of clusters which we know to be 8 SG
+  #   # Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
+  #   
+  #   c <- mfuzz(data.z, c=n_clusters, m=m1)
+  #   mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=0.5,time.labels=c(0,2,4,8,16,24),new.window=FALSE)
+  #   membership <- c$membership
+  #   membership <- data.frame(membership)
+  #   fd <- data.frame(cor(t(c[[1]])))
+  #   acore <- acore(data.z,c,min.acore = 0.5)
+  #   acore_list<-do.call(rbind,lapply(seq_along(acore), function(i){data.frame(CLUSTER=i, acore[[i]])}))
+  #   # colnames(acore_list)[2]<-"gene_name" # again don't do this it will break SG
+  #   
+  #   genelist<- acore(data.z,cl=c,min.acore=0.7)
+  #   temp <- do.call("rbind", lapply(genelist, FUN = function(x){
+  #     return(paste0(as.character(x$NAME), collapse = ","))
+  #   }))
+  #   # TODO: this stuffs up because Cluster_list is not formatted correctly??
+  #   Cluster_list<-as.data.frame(temp)
+  #   # colnames(Cluster_list) <-"gene_name"
+  #   Cluster_list<-str_split_fixed(Cluster_list$NAME,",", n=Inf)
+  #   Cluster_list<-t(Cluster_list)
+  #   # colnames(Cluster_list)<- c("Cluster1", "Cluster2","Cluster3","Cluster4","Cluster5","Cluster6","Cluster7","Cluster8")
+  # })
+  # 
+  # # For viewing cluster plots
+  # clusterList <- reactive({
+  #   y = adjustedPathogenData()
+  #   dat = pathogenData()
+  #   d = averageReplicates()
+  #   c = customGroups()
+  #   n_clusters = n_clusters()
+  #   min_membership = min_membership()
+  #   
+  #   # browser()
+  #   y.dat<- as.matrix(d)
+  #   y.dat <- y.dat[which(apply(y.dat, 1, var)>2 & apply(y.dat,1,mean)>2), 1:6]
+  #   timepoint <- c(0,2,4,8,16,24) # 8 hour timepoint was originally 4 SG
+  #   y.dat <- rbind(timepoint, y.dat)
+  #   rownames(y.dat)[1]<- "time"
+  #   tmp <- tempfile()
+  #   write.table(y.dat,file=tmp, sep='\t',quote=FALSE, col.names=NA)
+  #   z.data <- table2eset(tmp)
+  #   data.z <-standardise(z.data)
+  #   class(data.z)
+  #   m1 <-mestimate(data.z)
+  #   # next line commented because it takes ages 
+  #   # the purpose is to find the right number of clusters which we know to be 8 SG
+  #   # Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
+  #   
+  #   c <- mfuzz(data.z, c=n_clusters, m=m1)
+  #   mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=min_membership,time.labels=c(0,2,4,8,16,24),new.window=FALSE)
+  # })
 
 }
 
