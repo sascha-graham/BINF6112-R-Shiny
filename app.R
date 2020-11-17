@@ -12,6 +12,8 @@ library(ClueR)
 library(tools)
 library(shinythemes)
 library(shinydashboard)
+library(shinycssloaders)
+library(shinybusy)
 
 # Define UI for application that draws a histogram
 ui <- function(request) {
@@ -54,9 +56,9 @@ ui <- function(request) {
   )
   
   body <- dashboardBody(
-     tags$head(
+    tags$head(
       tags$style(HTML('#clickUpload{background:#d6863a; border:#d6863a}'))
-     ),
+    ),
     tabItems(
       tabItem(tabName = "table",
               box(width = NULL, status = "primary", solidHeader = TRUE, title="Upload Data",
@@ -86,7 +88,7 @@ ui <- function(request) {
               ),
               box(width = NULL, title = "Optional Cluster Optimisation", solidHeader = TRUE, status = "primary", 
                   actionButton("clickDMIN", "View DMIN Plot"),
-                  plotOutput("dmPlot"),
+                  conditionalPanel(condition = "input.clickDMIN", withSpinner(plotOutput('dmPlot', width = "50%"))),
                   numericInput("numClusters", 
                                h5("Number of Clusters:"), 
                                value = 4, min=2, max=12), 
@@ -99,17 +101,17 @@ ui <- function(request) {
       tabItem(tabName = "plot",
               tabBox(width = NULL,
                      tabPanel(h5("Cluster Tabulation"),
-                              div(style = 'overflow-x: scroll', tableOutput("view"))
+                              conditionalPanel(condition = "input.clickUpload", div(style = 'overflow-x: scroll', withSpinner(tableOutput("view"))))
                               
                      ),
                      tabPanel(
                        # AMY i put this in - the formatting of the plots is terrible though
                        h5("Cluster Plots"),
-                       div(style = 'overflow-x: scroll', plotOutput("cluster_plots"))
+                       conditionalPanel(condition = "input.clickUpload", div(style = 'overflow-x: scroll', withSpinner(plotOutput("cluster_plots"))))
                      ),
                      tabPanel(
                        h5("Differential Expression"),
-                       div(style = 'overflow-x: scroll', tableOutput("diffExp"))
+                       div(style = 'overflow-x: scroll', withSpinner(tableOutput("diffExp")))
                        # actionButton("clickCluster", "Clustering"),
                        # actionButton("clickDE", "Differential Expression")  
                      )
@@ -148,7 +150,7 @@ server <- function(input, output) {
   sampleGroupingData <- read.csv("pheno.csv", row.names = 1)
   sampleAnnotation <- read.csv("Annotation.csv")
   
-
+  
   # variables for num of clusters and min membership
   n_clusters <- reactive({
     n = input$numClusters
@@ -482,7 +484,7 @@ server <- function(input, output) {
     datasetInput <- reactive({
       switch(input$dataset,
              "Pathogen data" = samplePathogenData,
-             "Grouping data" = sampleGroupingData,
+             "Pheno data" = sampleGroupingData,
              "Annotations" = sampleAnnotation)
     })
     
@@ -570,7 +572,7 @@ server <- function(input, output) {
   #   c <- mfuzz(data.z, c=n_clusters, m=m1)
   #   mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=min_membership,time.labels=c(0,2,4,8,16,24),new.window=FALSE)
   # })
-
+  
 }
 
 # Run the application 
