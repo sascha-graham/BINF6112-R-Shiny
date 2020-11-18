@@ -69,7 +69,7 @@ Differential.gene.expression.for.2h<-DE[[1]]
 # Average replecates across each time -------------------------------------
 
 d = aggregate(x=t(dat), by = list(pheno$groups), FUN=mean)
-d = t(d[,2:dim(d)[2]])
+d = data.matrix(t(d[,2:dim(d)[2]]))
 colnames(d) <- unique(pheno$groups)
 
 
