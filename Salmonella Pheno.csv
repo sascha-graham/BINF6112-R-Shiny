@@ -1,0 +1,19 @@
+Samle.Names,Time,Control vs Infected,Replicates,groups,Comparison_2h,Comparison_4h,Comparison_8h,Comparison_16h,Comparison_24h
+HeLa.S3.WT.00_h.R1,0,Control,1,Control,0,0,0,0,0
+HeLa.S3.WT.00_h.R2,0,Control,2,Control,0,0,0,0,0
+HeLa.S3.WT.00_h.R3,0,Control,3,Control,0,0,0,0,0
+HeLa.S3.WT.02_h.R1,2,Infected,1,Infected_1,1,-1,-1,-1,-1
+HeLa.S3.WT.02_h.R2,2,Infected,2,Infected_1,1,-1,-1,-1,-1
+HeLa.S3.WT.02_h.R3,2,Infected,3,Infected_1,1,-1,-1,-1,-1
+HeLa.S3.WT.04_h.R1,4,Infected,1,Infected_2,-1,1,-1,-1,-1
+HeLa.S3.WT.04_h.R2,4,Infected,2,Infected_2,-1,1,-1,-1,-1
+HeLa.S3.WT.04_h.R3,4,Infected,3,Infected_2,-1,1,-1,-1,-1
+HeLa.S3.WT.08_h.R1,8,Infected,1,Infected_3,-1,-1,1,-1,-1
+HeLa.S3.WT.08_h.R2,8,Infected,2,Infected_3,-1,-1,1,-1,-1
+HeLa.S3.WT.08_h.R3,8,Infected,3,Infected_3,-1,-1,1,-1,-1
+HeLa.S3.WT.16_h.R1,16,Infected,1,Infected_4,-1,-1,-1,1,-1
+HeLa.S3.WT.16_h.R2,16,Infected,2,Infected_4,-1,-1,-1,1,-1
+HeLa.S3.WT.16_h.R3,16,Infected,3,Infected_4,-1,-1,-1,1,-1
+HeLa.S3.WT.24_h.R1,24,Infected,1,Infected_5,-1,-1,-1,-1,1
+HeLa.S3.WT.24_h.R2,24,Infected,2,Infected_5,-1,-1,-1,-1,1
+HeLa.S3.WT.24_h.R3,24,Infected,3,Infected_5,-1,-1,-1,-1,1
