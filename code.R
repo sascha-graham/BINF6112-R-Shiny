@@ -16,7 +16,7 @@ library(ClueR)
 # Load data and statistics analysis---------------------------------------------------------------
 
 dat   <- read.csv("Alldat.csv",row.names = 1)
-pheno <- read.csv("pheno.csv", row.names = 1)
+pheno <- read.csv("Salmonella Pheno.csv", row.names = 1)
 
 # Normalise ---------------------------------------------------------------
 
@@ -39,11 +39,12 @@ design <- model.matrix(~ 0 + group)
 colnames(design) <- levels(group)
 rownames(design) <- colnames(y)
 fit <- lmFit(y, design = design)
-cont.matrix <- makeContrasts(WT.02_h - WT.00_h,
-                             WT.04_h - WT.00_h,
-                             WT.08_h - WT.00_h,
-                             WT.16_h - WT.00_h,
-                             WT.24_h - WT.00_h,levels=design)
+cont.matrix <- aggregate(x=pheno[,5:dim(pheno)[2]], by = list(pheno$groups), FUN=mean)
+cont.matrix[cont.matrix == 0] <- -2
+cont.matrix[cont.matrix == -1] <- 0
+cont.matrix[cont.matrix == -2] <- -1
+cont.matrix <- data.matrix(cont.matrix[,2:dim(cont.matrix)[2]])
+rownames(cont.matrix) <- unique(pheno$groups)
 fit.cont <- eBayes(contrasts.fit(fit, cont.matrix))
 summa.fit <- decideTests(fit.cont)
 
@@ -67,14 +68,9 @@ Differential.gene.expression.for.2h<-DE[[1]]
 
 # Average replecates across each time -------------------------------------
 
-d <- cbind(rowMeans(dat[,c(1:3)], na.rm = T),
-           rowMeans(dat[,c(4:6)], na.rm = T),
-           rowMeans(dat[,c(7:9)], na.rm = T),
-           rowMeans(dat[,c(10:12)], na.rm = T),
-           rowMeans(dat[,c(13:15)], na.rm = T),
-           rowMeans(dat[,c(16:18)], na.rm = T))
-colnames(d) <- c("Mean.0h","Mean.20h","Mean.4h","Mean.8h","Mean.16h","Mean.24h")
-
+d = aggregate(x=t(dat), by = list(pheno$groups), FUN=mean)
+d = t(d[,2:dim(d)[2]])
+colnames(d) <- unique(pheno$groups)
 
 
 # Clustering using "Mfuzz" ------------------------------------------------
