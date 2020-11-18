@@ -39,7 +39,7 @@ design <- model.matrix(~ 0 + group)
 colnames(design) <- levels(group)
 rownames(design) <- colnames(y)
 fit <- lmFit(y, design = design)
-cont.matrix <- aggregate(x=pheno[,5:dim(pheno)[2]], by = list(pheno$groups), FUN=mean)
+cont.matrix <- aggregate(x=pheno[,(which(colnames(pheno) == 'groups')+1):dim(pheno)[2]], by = list(pheno$groups), FUN=mean)
 cont.matrix[cont.matrix == 0] <- -2
 cont.matrix[cont.matrix == -1] <- 0
 cont.matrix[cont.matrix == -2] <- -1
