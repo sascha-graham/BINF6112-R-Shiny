@@ -17,6 +17,7 @@ library(shinybusy)
 
 # Define UI for application that draws a histogram
 ui <- function(request) {
+  titlePanel("Dual RNA-seq Vizualizer")
   sidebar <- dashboardSidebar(
     hr(),
     sidebarMenu(id="tabs",
@@ -62,19 +63,13 @@ ui <- function(request) {
     tabItems(
       tabItem(tabName = "table",
               box(width = NULL, status = "primary", solidHeader = TRUE, title="Upload Data",
-                  fileInput("file1", "Upload Pathogen Data",
+                  fileInput("file1", "Upload RNA-seq Data",
                             multiple = TRUE,
                             accept = c("text/csv",
                                        "text/comma-separated-values,text/plain",
                                        ".csv")),
                   
-                  fileInput("file2", "Upload Host Data",
-                            multiple = TRUE,
-                            accept = c("text/csv",
-                                       "text/comma-separated-values,text/plain",
-                                       ".csv")),
-                  
-                  fileInput("file3", "Upload Grouping Data",
+                  fileInput("file3", "Upload Pheno Data",
                             multiple = TRUE,
                             accept = c("text/csv",
                                        "text/comma-separated-values,text/plain",
@@ -107,11 +102,11 @@ ui <- function(request) {
                      tabPanel(
                        # AMY i put this in - the formatting of the plots is terrible though
                        h5("Cluster Plots"),
-                       conditionalPanel(condition = "input.clickUpload", div(style = 'overflow-x: scroll', withSpinner(plotOutput("cluster_plots"))))
+                       conditionalPanel(condition = "input.clickUpload", div(style = 'overflow-x: scroll', withSpinner(plotOutput("cluster_plots", width = "75%"))))
                      ),
                      tabPanel(
                        h5("Differential Expression"),
-                       div(style = 'overflow-x: scroll', withSpinner(tableOutput("diffExp")))
+                       conditionalPanel(condition = "input.clickUpload", div(style = 'overflow-x: scroll', withSpinner(tableOutput("diffExp"))))
                        # actionButton("clickCluster", "Clustering"),
                        # actionButton("clickDE", "Differential Expression")  
                      )
@@ -133,7 +128,7 @@ ui <- function(request) {
   )
   
   dashboardPage(
-    dashboardHeader(title = "Host and Pathogen Dual-transcriptomic Profiles"),
+    dashboardHeader(title = "Dual RNA-seq Vizualiser"),
     sidebar,
     body
   )
@@ -164,13 +159,6 @@ server <- function(input, output) {
     if (!is.null(input$file1$datapath)) {
       # Extract file name
       x <- sub(".csv$", "", basename(input$file1$name))
-      return(x)
-    })
-  
-  output$hostFile <- renderText(
-    if (!is.null(input$file2$datapath)) {
-      # Extract file name
-      x <- c(sub(".csv$", "", basename(input$file2$name)))
       return(x)
     })
   
@@ -420,12 +408,15 @@ server <- function(input, output) {
     
     # cluster plot output
     output$cluster_plots <- renderPlot({
+      
       y = adjustedPathogenData()
       dat = pathogenData()
       d = averageReplicates()
       c = customGroups()
       n_clusters = n_clusters()
       min_membership = min_membership()
+      colum <- ceiling(sqrt(n_clusters))
+      rows <- ceiling(n_clusters/colum)
       
       # browser()
       y.dat<- as.matrix(d)
@@ -440,7 +431,7 @@ server <- function(input, output) {
       class(data.z)
       m1 <-mestimate(data.z)
       c <- mfuzz(data.z, c=n_clusters, m=m1)
-      mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=min_membership,time.labels=c(0,2,4,8,16,24), new.window = FALSE)
+      mfuzz.plot(data.z,cl=c,mfrow=c(rows,colum),min.mem=min_membership,time.labels=c(0,2,4,8,16,24), new.window = FALSE)
     })
     
   })
