@@ -76,8 +76,8 @@ colnames(d) <- unique(pheno$groups)
 # Clustering using "Mfuzz" ------------------------------------------------
 
 y.dat<- as.matrix(d)
-y.dat <- y.dat[which(apply(y.dat, 1, var)>2 & apply(y.dat,1,mean)>2), 1:6]
-timepoint <- c(0,2,4,4,16,24)
+y.dat <- y.dat[which(apply(y.dat, 1, var)>2 & apply(y.dat,1,mean)>2), 1:ncol(y.dat)]
+timepoint <- unique(pheno$Time)
 y.dat <- rbind(timepoint, y.dat)
 rownames(y.dat)[1]<- "time"
 tmp<- tempfile()
@@ -89,7 +89,7 @@ m1 <-mestimate(data.z)
 Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
 clust=8
 c<- mfuzz(data.z, c=clust, m=m1)
-mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=0.5,time.labels=c(0,2,4,4,16,24),new.window=FALSE)
+mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=0.5,time.labels=timepoint,new.window=FALSE)
 membership<-c$membership
 membership<-data.frame(membership)
 fd<-data.frame(cor(t(c[[1]])))
@@ -104,7 +104,12 @@ Cluster_list<-as.data.frame(temp)
 colnames(Cluster_list) <-"gene_name"
 Cluster_list<-str_split_fixed(Cluster_list$gene_name,",", n=Inf)
 Cluster_list<-t(Cluster_list)
-colnames(Cluster_list)<- c("Cluster1", "Cluster2","Cluster3","Cluster4","Cluster5","Cluster6","Cluster7","Cluster8")
+Cluster_list_colnames = c()
+for (i in c(1:clust))
+{
+	Cluster_list_colnames = c(Cluster_list_colnames, paste("Cluster",i))
+}
+colnames(Cluster_list)<- Cluster_list_colnames
 
 
 # Make list ---------------------------------------------------------------
