@@ -1,4 +1,3 @@
-
 # Load library ------------------------------------------------------------
 
 library(limma)
@@ -15,7 +14,7 @@ library(ClueR)
 
 # Load data and statistics analysis---------------------------------------------------------------
 
-dat   <- read.csv("All.Pseudomonas.data.csv",row.names = 1)
+dat   <- read.csv("Less.Pseudomonas.data.csv",row.names = 1)
 pheno <- read.csv("Pseudomonas.pheno.csv", row.names = 1)
 
 # Normalise ---------------------------------------------------------------
@@ -27,7 +26,7 @@ y <- cpm(calcNormFactors(y, method="TMM"), log = TRUE)
 
 # Filter ------------------------------------------------------------------
 
-keep <- filterByExpr(y, group = c, min.count = log2(10))
+keep <- filterByExpr(y, group = c, min.count = nrow(y))
 y <- y[keep,]
 normlise.count.dat<-data.frame(y)
 
@@ -53,13 +52,13 @@ summa.fit <- decideTests(fit.cont)
 
 
 de.ppi <- function(fit.cont, coef=1, lfc = 1, adjP =0.05){
- wtdt <- topTable(fit.cont, n = Inf, coef = coef)
- updt = with(wtdt, logFC > lfc & adj.P.Val < adjP)
- downdt = with(wtdt, logFC < lfc & adj.P.Val < adjP)
- wtdt$col="Not sig"
- wtdt$col[updt] = "Up"
- wtdt$col[downdt] = "Down"
- return(wtdt)}
+  wtdt <- topTable(fit.cont, n = Inf, coef = coef)
+  updt = with(wtdt, logFC > lfc & adj.P.Val < adjP)
+  downdt = with(wtdt, logFC < lfc & adj.P.Val < adjP)
+  wtdt$col="Not sig"
+  wtdt$col[updt] = "Up"
+  wtdt$col[downdt] = "Down"
+  return(wtdt)}
 
 DE <- list()
 for (n in 1:5){
@@ -95,7 +94,7 @@ m1 <-mestimate(data.z)
 Dmin(data.z, m=m1, crange=seq(2,22,1), repeats = 3, visu = TRUE)
 clust=8
 c<- mfuzz(data.z, c=clust, m=m1)
-mfuzz.plot(data.z,cl=c,mfrow=c(4,4),min.mem=0.5,time.labels=timepoint,new.window=FALSE)
+mfuzz.plot(data.z,cl=c,mfrow=c(4,2),min.mem=0.5,time.labels=timepoint,new.window=FALSE)
 membership<-c$membership
 membership<-data.frame(membership)
 fd<-data.frame(cor(t(c[[1]])))
@@ -113,7 +112,7 @@ Cluster_list<-t(Cluster_list)
 Cluster_list_colnames = c()
 for (i in c(1:clust))
 {
-	Cluster_list_colnames = c(Cluster_list_colnames, paste("Cluster",i))
+  Cluster_list_colnames = c(Cluster_list_colnames, paste("Cluster",i))
 }
 colnames(Cluster_list)<- Cluster_list_colnames
 
@@ -153,7 +152,3 @@ for (clus in ce$enrich.list) {
 }
 
 write.csv(out, file = "./Enrich.csv", quote = F, row.names = F)
-
-
-
-
