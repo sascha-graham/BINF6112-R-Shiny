@@ -15,8 +15,8 @@ library(ClueR)
 
 # Load data and statistics analysis---------------------------------------------------------------
 
-dat   <- read.csv("Alldat.csv",row.names = 1)
-pheno <- read.csv("Salmonella Pheno.csv", row.names = 1)
+dat   <- read.csv("All.Pseudomonas.data.csv",row.names = 1)
+pheno <- read.csv("Pseudomonas.pheno.csv", row.names = 1)
 
 # Normalise ---------------------------------------------------------------
 
@@ -43,6 +43,9 @@ cont.matrix <- aggregate(x=pheno[,(which(colnames(pheno) == 'groups')+1):dim(phe
 cont.matrix[cont.matrix == 0] <- -2
 cont.matrix[cont.matrix == -1] <- 0
 cont.matrix[cont.matrix == -2] <- -1
+ord = c()
+for (i in unique(pheno$groups)) { ord = c(ord, which(cont.matrix[,1]==i)) }
+cont.matrix = cont.matrix[ord, ]
 cont.matrix <- data.matrix(cont.matrix[,2:dim(cont.matrix)[2]])
 rownames(cont.matrix) <- unique(pheno$groups)
 fit.cont <- eBayes(contrasts.fit(fit, cont.matrix))
@@ -69,6 +72,9 @@ Differential.gene.expression.for.2h<-DE[[1]]
 # Average replecates across each time -------------------------------------
 
 d = aggregate(x=t(dat), by = list(pheno$groups), FUN=mean)
+ord = c()
+for (i in unique(pheno$groups)) { ord = c(ord, which(d[,1]==i)) }
+d = d[ord, ]
 d = data.matrix(t(d[,2:dim(d)[2]]))
 colnames(d) <- unique(pheno$groups)
 
